@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Comentarios</title>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content:ie="edge">
+        <link href="./css/index.css" type="text/css" rel="stylesheet"/>
+    </head>
+
+    <body>
+        <div>
+            <h1>Comentarios</h1>
+            <div>
+                <p>
+                    <form id="searchByAutor">
+                        <p>Buscar por autor: <input type="text" id="filtroAutor"></input></p>
+                        <div>
+                            <input type="submit" id="filtrarAutor"></input> 
+                        </div>
+                    </form>
+                </p>
+            </div>
+            <form id="commentsForm">
+                <ul id="listaComentarios">
+
+                </ul>
+                <div>
+                    <p>
+                    <label for="autor"></label>
+                       Autor:
+                    <input type="text" name="autor" id="autorBox"></input>
+                    </p>
+                    <p>
+                    <label for="titulo"></label>
+                      Titulo:
+                    <input type="textarea" name="titulo" id="tituloBox" rows="4" cols="50"></input>
+                    </p>
+                    <label for="contenido"></label>
+                        <p>Comentario:</p>
+                    <textarea name="contenido" id="contenidoBox" rows="4" cols="30"></textarea>
+                </div>
+                <p>
+                <div>
+                    <input type="submit" id="AddComment" name="AddComment"></input> 
+                </div>
+                </p>
+            </form>
+        </div>
+    </body>
+    <footer></footer>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+    crossorigin="anonymous"></script>
+    <script src="./js/index.js"></script>
+</html>
