@@ -1,108 +1,87 @@
 let express = require('express');
+let morgan = require('morgan')
 let bodyParser = require('body-parser');
-let morgan = require('morgan');
 let jsonParser = bodyParser.json();
 let app = express();
 let uuid = require('uuid/v4');
 let mongoose = require('mongoose');
 
-let {CommentController} = require('./model');
+let {cController} = require('./model');
 let {DATABASE_URL, PORT} = require('./config');
 
 app.use(express.static('public'));
 
 app.use(morgan('dev'));
 
-app.use(function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
-    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE");
-    if (req.method === "OPTIONS") {
-    return res.send(204);
-    }
-    next();
+app.get('/blog-api/comentarios', jsonParser, (req, res) => {
+    cController.getAll()
+        .then(comments => {
+            return res.status(200).json(comments);
+        })
+        .catch(error => {
+            console.log(error);
+            res.statusMessage = "Database error";
+            return res.status(500).send();
+        });
 });
 
-app.listen(8080, function(){
-    console.log("App is running");
-});
-
-let comentarios = [{
-    id: uuid(),
-    titulo: "Hola",
-    contenido: "me llamo Carlitos",
-    autor: "Carlos",
-    fecha: new Date()
-},
-{
-    id: uuid(),
-    titulo: "Adios",
-    contenido: "se la lavan",
-    autor: "Moises",
-    fecha: new Date()
-}];
-
-
-app.get('/blog-api/comentarios', jsonParser, (req,res) => {
-    CommentController.getAll()
-    .then(comments=>{
-        return status(200).json(comments);
-    })
-    .catch(error=>{
-        console.log(error);
-        res.statusMessage = "Database error";
-        return res.status(500).send();
-    });
-});
-
-app.get('/blog-api/comentarios-por-autor', jsonParser, (req,res) => {
+app.get('/blog-api/comentarios-por-autor', jsonParser, (req, res) => {
     let autor = req.query.autor;
     console.log(req.query.autor);
-    if(autor == undefined){
+    if (autor == undefined) {
         res.statusMessage = "No se ha proporcionado un autor correctamente";
         return res.status(406).send();
     }
 
-    CommentController.getByAutor(autor)
-    .then(comments=>{
-        return res.status(200).json(comments);
-    })
-    .catch(error=>{
-        res.statusMessage = "error de base de datos";
-        return res.status(500).send()
-    });
+    cController.getByAutor(autor)
+        .then(a => {
+            return res.status(200).json(a);
+        })
+        .catch(error => {
+            console.log(error);
+            res.statusMessage = "Database error";
+            return res.status(500).send();
+        });
 });
 
-app.post('/blog-api/nuevo-comentario', jsonParser, (req,res) => {
+app.post('/blog-api/nuevo-comentario', jsonParser, (req, res) => {
+    let titulo, contenido, autor;
+
+    
     if(req.body.autor==undefined||req.body.contenido==undefined||req.body.titulo==undefined){
         res.statusMessage = "No se han recibido todos los parametros";
         return res.status(406).send();
     }
-    else{
-        let comentario = {
-            autor : req.body.autor,
-            titulo: req.body.titulo,
-            contenido: req.body.contenido,
-            date: new Date()
-        };
-        CommentController.create(comentario)
-        .then(newCom =>{
-            return res.status(201).json(newCom);
+    
+    titulo = req.body.titulo;
+    contenido = req.body.contenido;
+    autor = req.body.autor;
+
+    let nuevoComentario = {
+        titulo: titulo,
+        autor: autor,
+        contenido: contenido,
+        fecha: new Date()
+    };
+
+    cController.createComment(nuevoComentario)
+        .then(nc => {
+            return res.status(201).json(nc);
         })
-        .catch(error=>{
-            res.statusMessage = "error de base de datos";
-            return res.status(500).send()
-        })
-    }
+        .catch(error => {
+            console.log(error);
+            res.statusMessage = "Database error";
+            return res.status(500).send();
+        });
 });
 
 app.delete('/blog-api/remover-comentario/:id', jsonParser, (req, res) => {
     let id = req.params.id;
 
-    CommentController.getById(id)
-        .then(c => {
-            CommentController.delete(id)
-                .then(rc => {
+    cController.getById(id)
+        .then(com => {
+            cController.delete(id)
+                .then(delc => {
                     return res.status(200).send();
                 })
                 .catch(error => {
@@ -113,9 +92,11 @@ app.delete('/blog-api/remover-comentario/:id', jsonParser, (req, res) => {
         })
         .catch(error => {
             console.log(error);
-            res.statusMessage = "ID no encontrado";
+            res.statusMessage ="No se ha encontrado el comentario";
             return res.status(404).send();
         });
+
+    
 });
 
 app.put('/blog-api/actualizar-comentario/:id', jsonParser, (req, res) => {
@@ -125,6 +106,7 @@ app.put('/blog-api/actualizar-comentario/:id', jsonParser, (req, res) => {
     }
 
     let id = req.params.id;
+    console.log(req.params.id);
 
     let titulo, contenido, autor;
 
@@ -133,11 +115,13 @@ app.put('/blog-api/actualizar-comentario/:id', jsonParser, (req, res) => {
     autor = req.body.autor;
 
     if (titulo == undefined && contenido == undefined && autor == undefined) {
-        res.statusMessage = "No hay parametros a modificar";
+        res.statusMessage = "No se han definido datos a actualizar";
         return res.status(409).send();
     }
 
-    let nuevoComentario = {};
+    let nuevoComentario = {
+
+    };
 
     if (titulo != undefined) {
         nuevoComentario.titulo = titulo;
@@ -149,11 +133,12 @@ app.put('/blog-api/actualizar-comentario/:id', jsonParser, (req, res) => {
         nuevoComentario.contenido = contenido;
     }
 
-    CommentController.getById(id)
-        .then(c => {
-            CommentController.update(id, nuevoComentario)
-                .then(nc => {
-                    return res.status(202).json(nc);
+    cController.getById(id)
+        .then(com => {
+            cController.edit(id, nuevoComentario)
+                .then(comment => {
+                    res.statusMessage = "Se ha actualizado el comentario";
+                    return res.status(202).json(comment);
                 })
                 .catch(error => {
                     console.log(error);
@@ -163,50 +148,50 @@ app.put('/blog-api/actualizar-comentario/:id', jsonParser, (req, res) => {
         })
         .catch(error => {
             console.log(error);
-            res.statusMessage = "ID no encontrado";
+            res.statusMessage = "No se ha encontrado el ID";
             return res.status(404).send();
         });
 });
 
 let server;
 
-function runServer(port, databaseUrl){
-    return new Promise( (resolve, reject ) => {
-        mongoose.connect(databaseUrl, response => {
-            if ( response ){
+function runServer(port, databaseUrl) {
+    return new Promise((resolve, reject) => {
+        mongoose.connect(databaseUrl, { useNewUrlParser: true, useUnifiedTopology: true }, response => {
+            if (response) {
                 return reject(response);
             }
-            else{
+            else {
                 server = app.listen(port, () => {
-                console.log( "App is running on port " + port );
-                resolve();
-            })
-                .on( 'error', err => {
-                    mongoose.disconnect();
-                    return reject(err);
+                    console.log("App is running on port " + port);
+                    resolve();
                 })
+                    .on('error', err => {
+                        mongoose.disconnect();
+                        return reject(err);
+                    })
             }
         });
     });
-   }
-   
-   function closeServer(){
-        return mongoose.disconnect()
+}
+
+function closeServer() {
+    return mongoose.disconnect()
         .then(() => {
             return new Promise((resolve, reject) => {
                 console.log('Closing the server');
-                server.close( err => {
-                    if (err){
+                server.close(err => {
+                    if (err) {
                         return reject(err);
                     }
-                    else{
+                    else {
                         resolve();
                     }
                 });
             });
         });
-   }
+}
 
-runServer(PORT,DATABASE_URL);
-module.exports = {app,runServer, closeServer};
+runServer(PORT, DATABASE_URL);
 
+module.exports = {app, runServer, closeServer};

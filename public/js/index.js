@@ -26,7 +26,8 @@ function showComments(responseJSON){
             <h2>${elemento.titulo}</h2>
             <h3> by ${elemento.autor}</h3>
             <p>${elemento.contenido}</p>
-            <p> <button type="button" value="${elemento.id}" class="editButton">Edit</button> <button type="button" value="${elemento.id}" class="deleteButton">Delete</button> </p>
+            <p> ${elemento.fecha} </p>
+            <p> <button type="button" value="${elemento._id}" class="editButton">Edit</button> <button type="button" value="${elemento._id}" class="deleteButton">Delete</button> </p>
             </li>
             `
         );
@@ -209,15 +210,12 @@ function watchEdit(){
                 comentario.contenido = content;
             }
 
-            console.log(comentario.autor);
-            console.log(comentario.titulo);
-            console.log(comentario.contenido);
 
             comentario.id = $(this).parent().parent().find('.editButton').val();
 
             console.log($(this).parent().parent().find('.editButton').val());
             
-            editComment(comentario, comentario.id.toString());
+            editComment(comentario, comentario.id);
         }
     });
 }
@@ -225,7 +223,8 @@ function watchEdit(){
 function watchDelete(){
     $('#listaComentarios').on('click', '.deleteButton', function(event){
         console.log($(this).parent().parent());
-        let id = $(this).val();
+        let id = $('.deleteButton').val();
+        console.log(id);
         deleteComment(id);
     });
 }

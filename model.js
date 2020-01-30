@@ -2,16 +2,16 @@ let mongoose = require('mongoose');
 let uuid = require('uuid/v4');
 mongoose.Promise = global.Promise;
 
-let commentCollection = mongoose.Schema({
+let cCollection = mongoose.Schema({
+    autor: String,
     titulo: String,
     contenido: String,
-    autor: String,
     fecha: Date
 });
 
-let Comment = mongoose.model('comment', commentCollection);
+let Comment = mongoose.model('comments', cCollection);
 
-let CommentController = {
+let cController = {
     getAll: function(){
         return Comment.find()
         .then(comments => {
@@ -30,8 +30,8 @@ let CommentController = {
             throw Error(error);
         });
     },
-    create: function(newComment){
-        return Comment.create(newComment)
+    createComment: function(newComment){
+        return Comment.createComment(newComment)
         .then(comment => {
             return comment;
         })
@@ -41,14 +41,14 @@ let CommentController = {
     },
     delete: function(id){
         return Comment.findByIdAndRemove(id)
-        .then(comment=>{
-            return comment;
+        .then(del=>{
+            return del;
         })
         .catch(error=>{
             throw Error(error);
         });
     },
-    update: function(newComment){
+    edit: function(id, newComment){
         return Comment.findByIdAndUpdate(id,newComment)
         .then(comment=>{
             return comment;
@@ -68,4 +68,4 @@ let CommentController = {
     }
 }
 
-module.exports = {CommentController}
+module.exports = {cController}
