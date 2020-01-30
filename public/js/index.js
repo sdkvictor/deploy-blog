@@ -212,8 +212,11 @@ function watchEdit(){
             console.log(comentario.autor);
             console.log(comentario.titulo);
             console.log(comentario.contenido);
+
             comentario.id = $(this).parent().parent().find('.editButton').val();
+
             console.log($(this).parent().parent().find('.editButton').val());
+            
             editComment(comentario, comentario.id.toString());
         }
     });

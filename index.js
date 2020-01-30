@@ -43,8 +43,7 @@ let comentarios = [{
 }];
 
 
-
-app.get('/blog-api/comentarios', (req,res) => {
+app.get('/blog-api/comentarios', jsonParser, (req,res) => {
     CommentController.getAll()
     .then(comments=>{
         return status(200).json(comments);
@@ -52,11 +51,11 @@ app.get('/blog-api/comentarios', (req,res) => {
     .catch(error=>{
         console.log(error);
         res.statusMessage = "Database error";
-        return res.status(200).send();
+        return res.status(500).send();
     });
 });
 
-app.get('/blog-api/comentarios-por-autor', (req,res) => {
+app.get('/blog-api/comentarios-por-autor', jsonParser, (req,res) => {
     let autor = req.query.autor;
     console.log(req.query.autor);
     if(autor == undefined){
@@ -65,12 +64,13 @@ app.get('/blog-api/comentarios-por-autor', (req,res) => {
     }
 
     CommentController.getByAutor(autor)
-    .tjrn(aut =>{
-        return res.status(200).json(aut);
+    .then(comments=>{
+        return res.status(200).json(comments);
     })
-    .catch(error=> {
-        console.log(error);
-    })
+    .catch(error=>{
+        res.statusMessage = "error de base de datos";
+        return res.status(500).send()
+    });
 });
 
 app.post('/blog-api/nuevo-comentario', jsonParser, (req,res) => {
@@ -83,75 +83,89 @@ app.post('/blog-api/nuevo-comentario', jsonParser, (req,res) => {
             autor : req.body.autor,
             titulo: req.body.titulo,
             contenido: req.body.contenido,
-            date: new Date(),
-            id: uuid()
-        }
-        comentarios.push(comentario);
-        return res.status(201).json(comentario);
+            date: new Date()
+        };
+        CommentController.create(comentario)
+        .then(newCom =>{
+            return res.status(201).json(newCom);
+        })
+        .catch(error=>{
+            res.statusMessage = "error de base de datos";
+            return res.status(500).send()
+        })
     }
 });
 
-app.delete('/blog-api/remover-comentario/:id', (req,res)=>{
+app.delete('/blog-api/remover-comentario/:id', jsonParser, (req, res) => {
     let id = req.params.id;
-    let index;
-    let result = comentarios.find((elemento)=>{
-        if(elemento.id == id){
-            index = comentarios.indexOf(elemento);
-            return elemento;
-        }
-    });
-    if(result){
-        comentarios.splice(index,1);
-        return res.status(200).send();
-    }
-    else{
-        res.statusMessage ="No se ha encontrado el comentario";
-        return res.status(404).send();
-    }  
+
+    CommentController.getById(id)
+        .then(c => {
+            CommentController.delete(id)
+                .then(rc => {
+                    return res.status(200).send();
+                })
+                .catch(error => {
+                    console.log(error);
+                    res.statusMessage = "Database error";
+                    return res.status(500).send();
+                });
+        })
+        .catch(error => {
+            console.log(error);
+            res.statusMessage = "ID no encontrado";
+            return res.status(404).send();
+        });
 });
 
-app.put('/blog-api/actualizar-comentario/:id', jsonParser, (req,res)=>{
-    let id = req.body.id;
-    if(id==undefined){
-        res.statusMessage = "ID no proporcionado en el cuerpo";
-        return res.status(406).send();
-    }  
-    if(req.params.id != id){
+app.put('/blog-api/actualizar-comentario/:id', jsonParser, (req, res) => {
+    if (req.params.id != req.body.id) {
         res.statusMessage = "IDs no coinciden";
+        return res.status(406).send();
+    }
+
+    let id = req.params.id;
+
+    let titulo, contenido, autor;
+
+    titulo = req.body.titulo;
+    contenido = req.body.contenido;
+    autor = req.body.autor;
+
+    if (titulo == undefined && contenido == undefined && autor == undefined) {
+        res.statusMessage = "No hay parametros a modificar";
         return res.status(409).send();
     }
-    if(req.body.titulo == undefined && req.body.contenido == undefined && req.body.autor == undefined){
-        res.statusMessage = "No se han definido datos a actualizar";
-        return res.status(406).send();
-    }
-    let foundId = false;
-    comentarios.forEach((elemento)=>{
-        if(elemento.id.toString() == id){
-            foundId = true;
-            if(req.body.autor != undefined){
-                elemento.autor = req.body.autor;
-            }
-            if(req.body.titulo != undefined){
-                elemento.titulo = req.body.titulo;
-            }
-            if(req.body.contenido != undefined){
-                elemento.contenido = req.body.contenido;
-            }
-            let comentario = elemento;
-            console.log("se actualizo");
-            res.statusMessage = "Se ha actualizado el comentario";
-            return res.status(202).json(comentario);
-        }
-    });
-    if(!foundId){
-        res.statusMessage = "No se ha encontrado el comentario";
-        return res.status(404).send();
 
+    let nuevoComentario = {};
+
+    if (titulo != undefined) {
+        nuevoComentario.titulo = titulo;
     }
-    else{
-        res.statusMessage = "Se ha actualizado el comentario";
-        return res.status(202).json(comentario);
+    if (autor != undefined) {
+        nuevoComentario.autor = autor;
     }
+    if (contenido != undefined) {
+        nuevoComentario.contenido = contenido;
+    }
+
+    CommentController.getById(id)
+        .then(c => {
+            CommentController.update(id, nuevoComentario)
+                .then(nc => {
+                    return res.status(202).json(nc);
+                })
+                .catch(error => {
+                    console.log(error);
+                    res.statusMessage = "Database error";
+                    return res.status(500).send();
+                });
+        })
+        .catch(error => {
+            console.log(error);
+            res.statusMessage = "ID no encontrado";
+            return res.status(404).send();
+        });
 });
 
 let server;

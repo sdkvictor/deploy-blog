@@ -3,7 +3,6 @@ let uuid = require('uuid/v4');
 mongoose.Promise = global.Promise;
 
 let commentCollection = mongoose.Schema({
-    
     titulo: String,
     contenido: String,
     autor: String,
@@ -22,17 +21,50 @@ let CommentController = {
             throw Error(error);
         });
     },
-    getByAutor: function(){
-        return 
+    getByAutor: function(autor){
+        return Comment.find({autor:autor})
+        .then(comments=>{
+            return comments;
+        })
+        .catch(error=>{
+            throw Error(error);
+        });
     },
-    create: function(){
-        return Comment.create(newAutor)
-        .then(nc => {
-            throw new Error(error);
+    create: function(newComment){
+        return Comment.create(newComment)
+        .then(comment => {
+            return comment;
         })
-        .catch(nc =>{
-
+        .catch(error =>{
+            throw Error(error);
+        });
+    },
+    delete: function(id){
+        return Comment.findByIdAndRemove(id)
+        .then(comment=>{
+            return comment;
         })
+        .catch(error=>{
+            throw Error(error);
+        });
+    },
+    update: function(newComment){
+        return Comment.findByIdAndUpdate(id,newComment)
+        .then(comment=>{
+            return comment;
+        })
+        .catch(error=>{
+            throw Error(error);
+        });
+    },
+    getById: function(id){
+        return Comment.findById(id)
+        .then(comment=>{
+            return comment;
+        })
+        .catch(error=>{
+            throw Error(error);
+        });
     }
 }
 
