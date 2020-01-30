@@ -32,8 +32,8 @@ let cController = {
     },
     createComment: function(newComment){
         return Comment.create(newComment)
-        .then(comment => {
-            return comment;
+        .then(nc => {
+            return nc;
         })
         .catch(error =>{
             throw Error(error);

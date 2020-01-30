@@ -48,7 +48,7 @@ app.post('/blog-api/nuevo-comentario', jsonParser, (req, res) => {
     let titulo, contenido, autor;
 
     
-    if(req.body.autor==undefined||req.body.contenido==undefined||req.body.titulo==undefined){
+    if(req.body.autor==""||req.body.contenido==""||req.body.titulo==""){
         res.statusMessage = "No se han recibido todos los parametros";
         return res.status(406).send();
     }
@@ -77,11 +77,12 @@ app.post('/blog-api/nuevo-comentario', jsonParser, (req, res) => {
 
 app.delete('/blog-api/remover-comentario/:id', jsonParser, (req, res) => {
     let id = req.params.id;
+    console.log(id);
 
     cController.getById(id)
         .then(com => {
             cController.delete(id)
-                .then(delc => {
+                .then(remc => {
                     return res.status(200).send();
                 })
                 .catch(error => {

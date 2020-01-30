@@ -223,7 +223,7 @@ function watchEdit(){
 function watchDelete(){
     $('#listaComentarios').on('click', '.deleteButton', function(event){
         console.log($(this).parent().parent());
-        let id = $('.deleteButton').val();
+        let id = $(this).val();
         console.log(id);
         deleteComment(id);
     });
