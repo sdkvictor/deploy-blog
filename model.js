@@ -31,7 +31,7 @@ let cController = {
         });
     },
     createComment: function(newComment){
-        return Comment.createComment(newComment)
+        return Comment.create(newComment)
         .then(comment => {
             return comment;
         })
